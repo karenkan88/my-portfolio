@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karen Design | Portfolio</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-hero: #ffffff;
+            
+            /* 🔥 升级：使用你指定的冷灰蓝背景，增加层次感 */
+            --bg-works: #f8f9fc; 
+            
+            --bg-card-gradient: linear-gradient(145deg, #ffffff 0%, #f4f4f5 100%); 
+            --text-main: #111111;
+            --text-gray: #666666;
+            --nav-height: 60px; 
+            --container-max-width: 1400px;
+            --container-padding: 20px;
+            --theme-pink: #FF59AA; 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Manrope', 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-hero);
+            color: var(--text-main);
+            padding-top: var(--nav-height);
+            overflow-x: hidden;
+            position: relative;
+            cursor: default;
+        }
+
+        /* 动态光晕 */
+        .cursor-glow {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
+            background: radial-gradient(600px circle at var(--x, 50%) var(--y, 50%), rgba(29, 78, 216, 0.04), transparent 50%);
+            transition: background 0.1s ease;
+        }
+
+        /* 魔法 Emoji 光标 */
+        .emoji-cursor {
+            position: fixed; top: 0; left: 0; font-size: 40px; pointer-events: none; z-index: 9999;
+            transform: translate(-50%, -50%) scale(0); opacity: 0;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+        }
+        .emoji-cursor.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        /* === 导航栏 === */
+        nav {
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 max(4%, var(--container-padding)); z-index: 1000;
+        }
+
+        .brand { 
+            display: flex; align-items: center; gap: 10px; 
+            font-weight: 800; font-size: 1.1rem; text-decoration: none; color: var(--text-main); 
+        }
+        .brand img { height: 28px; width: auto; }
+
+        .nav-flip-link {
+            text-decoration: none; height: var(--nav-height); overflow: hidden; display: block; cursor: pointer; color: var(--text-gray); transition: color 0.3s;
+        }
+        .nav-flip-link:hover { color: #000; }
+        .flip-inner { display: block; height: 100%; transform: translateY(-100%); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .nav-flip-link:hover .flip-inner { transform: translateY(0%); }
+        .flip-text { display: flex; align-items: center; height: 100%; font-weight: 600; font-size: 0.9rem; white-space: nowrap; }
+        .menu { display: flex; gap: 30px; }
+
+        /* 布局 */
+        .hero-split, .container, .testimonials-container, .faq-container, .skills-container {
+            max-width: var(--container-max-width); margin: 0 auto; padding-left: var(--container-padding); padding-right: var(--container-padding);
+        }
+        @media (max-width: 1600px) { :root { --container-max-width: 1040px; } }
+
+        /* Hero */
+        .hero-split { min-height: 85vh; display: flex; align-items: center; justify-content: space-between; padding-top: 40px; padding-bottom: 80px; gap: 60px; position: relative; z-index: 1; }
+        .hero-text { flex: 0.9; }
+        .location-badge { display: inline-flex; align-items: center; gap: 6px; background: #fff; padding: 6px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 600; color: #333; margin-bottom: 25px; border: 1px solid #e5e5e5; }
+        .location-icon { color: #000; }
+        .hero-text h1 { font-size: 3.8rem; line-height: 1.1; font-weight: 800; margin-bottom: 20px; color: #000; }
+        .hero-subtitle { font-size: 1.5rem; color: #444; margin-bottom: 20px; font-weight: 600; }
+        .hero-desc { font-size: 1.15rem; color: #666; line-height: 1.6; margin-bottom: 40px; max-width: 550px; }
+        .btn-group { display: flex; gap: 15px; align-items: center; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 50px; padding: 0 30px; min-width: 160px; border-radius: 50px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; font-size: 1rem; cursor: pointer; }
+        .btn-primary { background: linear-gradient(180deg, rgb(61, 61, 61) 0%, rgb(28, 28, 28) 100%); color: #fff; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .btn-primary:hover { background: linear-gradient(180deg, rgb(70, 70, 70) 0%, rgb(40, 40, 40) 100%); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.25); }
+        .btn-icon-white { width: 20px; height: 20px; display: block; filter: invert(1) brightness(200%); }
+        .btn-outline { background: transparent; border: 2px solid #ccc; color: #333; }
+        .btn-outline:hover { border-color: #000; color: #000; transform: translateY(-2px); }
+        .wechat-wrapper { position: relative; }
+        .qr-popup { position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%) translateY(10px); width: 180px; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); opacity: 0; visibility: hidden; transition: all 0.3s ease; text-align: center; border: 1px solid #eee; z-index: 100; }
+        .qr-popup img { width: 100%; display: block; border-radius: 4px; }
+        .qr-text { font-size: 0.8rem; color: #666; margin-top: 8px; display: block; }
+        .qr-popup::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -8px; border-width: 8px; border-style: solid; border-color: #fff transparent transparent transparent; }
+        .wechat-wrapper:hover .qr-popup { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+        
+        /* Hero Image */
+        .hero-image { flex: 1; display: flex; justify-content: center; position: relative; }
+        .profile-container { position: relative; width: 100%; max-width: 450px; aspect-ratio: 4/5; }
+        .rotating-border {
+            position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px; 
+            background: linear-gradient(135deg, rgba(255, 89, 170, 0.3), var(--theme-pink));
+            border-radius: 43px; z-index: 0; transition: all 0.5s ease; opacity: 0;
+        }
+        .profile-container:hover .rotating-border { animation: spin 6s linear infinite, breathe 3s ease-in-out infinite alternate; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes breathe { from { opacity: 0.1; } to { opacity: 0.8; } }
+        .image-card { width: 100%; height: 100%; background: #fff; border-radius: 40px; overflow: hidden; box-shadow: 20px 20px 60px rgba(0,0,0,0.05); position: relative; z-index: 1; }
+        .image-card img { width: 100%; height: 100%; object-fit: cover; }
+        .float-tag { position: absolute; background: #fff; padding: 14px 24px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); z-index: 2; animation: float 6s ease-in-out infinite; }
+        .tag-bottom-left { bottom: 40px; left: -30px; font-weight: 700; font-size: 1rem; color: #111; display: flex; align-items: center; gap: 8px; }
+        .tag-top-right { top: 40px; right: -40px; display: flex; flex-direction: column; gap: 4px; animation-delay: -2s; }
+        .tag-title { font-weight: 800; font-size: 1rem; color: #000; }
+        .tag-subtitle { font-size: 0.85rem; color: #666; font-weight: 600; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+
+        /* === 项目列表 (V16.0 背景颜色+年份升级) === */
+        .works-section-bg { 
+            width: 100%; 
+            background-color: var(--bg-works); /* 🔥 改为 #f8f9fc */
+            padding-top: 100px; padding-bottom: 100px; 
+            position: relative; z-index: 1; 
+        }
+        .section-header { text-align: center; margin-bottom: 80px; }
+        .section-title { font-size: 2.8rem; font-weight: 800; color: #111; display: inline-block; position: relative; }
+        .project-list { display: flex; flex-direction: column; gap: 60px; }
+        
+        .project-card { 
+            display: flex; 
+            background: var(--bg-card-gradient); 
+            border: 1px solid #ffffff;
+            box-shadow: 
+                0 10px 30px -10px rgba(0,0,0,0.05), 
+                0 4px 6px -2px rgba(0,0,0,0.02),
+                inset 0 0 0 1px rgba(255,255,255,0.6); 
+            padding: 24px; border-radius: 40px; text-decoration: none; color: inherit; 
+            transition: all 0.4s ease; position: relative; gap: 50px; align-items: stretch; min-height: 500px; 
+        }
+        
+        .project-card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 30px 60px -15px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(255,255,255,0.8);
+        }
+        
+        .card-image-box { flex: 1.5; border-radius: 30px; overflow: hidden; background: #fff; position: relative; }
+        .card-image-box img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.2, 1, 0.3, 1); }
+        .project-card:hover .card-image-box img { transform: scale(1.06); }
+        
+        .card-content { flex: 1; display: flex; flex-direction: column; justify-content: center; position: relative; padding-right: 10px; }
+        .card-top-meta { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600; color: #888; margin-bottom: 24px; }
+        .project-logo { width: 24px; height: 24px; object-fit: contain; border-radius: 4px; }
+
+        .project-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+        .project-title { font-size: 2rem; font-weight: 800; line-height: 1.1; color: #111; margin: 0; }
+        .project-title-cn { font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; color: #444; }
+        
+        /* 🔥 新增：年份样式 */
+        .project-year-text {
+            font-size: 1rem; font-weight: 600; color: #888; 
+            font-family: 'Manrope', sans-serif;
+            margin-bottom: 24px; /* 放在描述上方，中文标题下方 */
+            display: block;
+        }
+
+        .project-desc { font-size: 1.05rem; color: #666; line-height: 1.6; margin-bottom: 40px; }
+        .tags { display: flex; gap: 12px; flex-wrap: wrap; margin-top: auto; }
+        .tag { padding: 8px 16px; background: #fff; border: 1px solid rgba(0,0,0,0.05); border-radius: 50px; font-size: 0.85rem; color: #555; font-weight: 600; }
+        
+        .arrow-btn { position: absolute; top: 0; right: 0; width: 56px; height: 56px; background: #e8e8e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .arrow-btn svg { width: 24px; height: 24px; color: #000; transition: transform 0.3s ease; }
+        .project-card:hover .arrow-btn { background: #000; transform: scale(1.1); }
+        .project-card:hover .arrow-btn svg { color: #fff; transform: rotate(45deg); }
+
+        /* 评价 */
+        .testimonials-section { padding: 0 0 150px; background: #fff; overflow: hidden; }
+        .testimonials-header { text-align: center; margin-bottom: 60px; padding: 0 20px; }
+        .testimonials-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; color: #111; }
+        .testimonials-subtitle { font-size: 1.1rem; color: #666; font-weight: 600; }
+        .marquee-wrapper { width: 100%; display: flex; mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); }
+        .marquee-track { display: flex; gap: 30px; width: max-content; animation: scroll 60s linear infinite; }
+        .marquee-track:hover { animation-play-state: paused; }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .testimonial-card { width: 400px; background: #f9f9fa; border-radius: 24px; padding: 30px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 20px; }
+        .testimonial-text { font-size: 1.05rem; line-height: 1.6; color: #333; font-style: italic; }
+        .star-rating { display: flex; gap: 4px; color: #ffc107; font-size: 1.1rem; margin-top: auto; }
+        .testimonial-author { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+        .author-avatar { width: 48px; height: 48px; background: #eee; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; }
+        .author-info h4 { font-size: 1rem; font-weight: 700; color: #000; margin-bottom: 2px; }
+        .author-info p { font-size: 0.85rem; color: #888; }
+
+        /* FAQ */
+        .faq-section { padding: 0 0 120px; background: #fff; }
+        .faq-list { display: flex; flex-direction: column; gap: 20px; }
+        .faq-item { background: #f7f7f7; border-radius: 24px; overflow: hidden; transition: all 0.3s ease; cursor: pointer; }
+        .faq-item.active { background: #f0f0f0; }
+        .faq-header { padding: 32px 32px 20px 32px; display: flex; justify-content: space-between; align-items: center; }
+        .faq-question-box { display: flex; flex-direction: column; gap: 8px; }
+        .faq-question-en { font-size: 1.4rem; font-weight: 700; color: #111; }
+        .faq-question-cn { font-size: 1rem; font-weight: 600; color: #666; }
+        .faq-toggle-btn { width: 48px; height: 48px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: transform 0.3s ease; flex-shrink: 0; }
+        .faq-item.active .faq-toggle-btn { transform: rotate(45deg); }
+        .faq-body { max-height: 0; overflow: hidden; padding: 0 32px; transition: max-height 0.5s cubic-bezier(0, 1, 0, 1), padding 0.5s ease; }
+        .faq-item.active .faq-body { padding-bottom: 40px; }
+        .faq-answer { font-size: 1.1rem; line-height: 1.6; color: #444; margin-top: 0; }
+
+        /* Skills */
+        .skills-section { padding: 0 0 60px; background: #fff; position: relative; }
+        .skills-container .section-header { margin-bottom: 40px; }
+        .skills-playground {
+            width: 100%; height: 500px; background-color: #f4f6f8; 
+            background-image: radial-gradient(#cbd5e1 2px, transparent 2px); background-size: 30px 30px;
+            border-radius: 32px; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        canvas.matter-canvas { display: block; border-radius: 32px; }
+        .skill-pill {
+            position: absolute; top: 0; left: 0; padding: 14px 28px; background: #fff; border-radius: 50px; font-size: 1rem; font-weight: 700; color: #111;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; transform-origin: center center; will-change: transform;
+            visibility: hidden; pointer-events: none; user-select: none;
+        }
+        .skills-hint { position: absolute; text-align: center; pointer-events: none; z-index: 0; }
+        .skills-hint i { font-size: 32px; color: #999; margin-bottom: 10px; display: block;}
+        .skills-hint span { font-size: 1.1rem; font-weight: 700; color: #888; }
+
+        .footer { height: 36px; display: flex; justify-content: center; align-items: center; color: #999; font-size: 0.8rem; font-weight: 500; border-top: 1px solid rgba(0,0,0,0.05); background: #fff; }
+
+        @media (max-width: 768px) {
+            .hero-split { flex-direction: column-reverse; text-align: center; padding-top: 40px; min-height: auto; gap: 40px; }
+            .hero-text { width: 100%; flex: 1; }
+            .hero-text h1 { font-size: 2.8rem; }
+            .btn-group { justify-content: center; }
+            .image-card { width: 100%; max-width: 100%; height: 400px; }
+            .project-card { flex-direction: column; padding: 20px; min-height: auto; gap: 30px; }
+            .card-image-box { height: 280px; flex: 1; }
+            .arrow-btn { top: 20px; right: 20px; }
+            .testimonial-card { width: 300px; }
+            .faq-question-en { font-size: 1.2rem; }
+            .skills-playground { height: 500px; }
+            .tag-bottom-left { left: -10px; bottom: 20px; }
+            .tag-top-right { right: -10px; top: 20px; }
+            .hero-image { overflow: visible; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cursor-glow"></div>
+    <div class="emoji-cursor">🍀</div>
+
+    <nav>
+        <a href="#" class="brand">
+            <img src="logo.png" alt="Logo">
+            Karen Design
+        </a>
+        <div class="menu">
+            <a href="#" class="nav-flip-link"><div class="flip-inner"><div class="flip-text">项目</div><div class="flip-text">项目</div></div></a>
+            <a href="services.html" class="nav-flip-link"><div class="flip-inner"><div class="flip-text">我能做什么？</div><div class="flip-text">我能做什么？</div></div></a>
+            <a href="#" class="nav-flip-link"><div class="flip-inner"><div class="flip-text">经验沉淀</div><div class="flip-text">经验沉淀</div></div></a>
+        </div>
+    </nav>
+
+    <header class="hero-split">
+        <div class="hero-text">
+            <div class="location-badge"><svg class="location-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/><path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>深圳市龙岗区</div>
+            <h1>Hi, 我是干圆圆.</h1>
+            <div class="hero-subtitle">Designing products that unite business and user needs.</div>
+            <p class="hero-desc">我专注于设计能够统一商业目标与用户需求的产品。利用AI提升设计效率。从事设计行业10年 7年互联网UI/UX设计经验。</p>
+            <div class="btn-group">
+                <a href="resume.pdf" download="Karen_Resume.pdf" class="btn btn-primary"><img src="download.svg" alt="icon" class="btn-icon-white">下载简历</a>
+                <div class="wechat-wrapper"><a href="#" class="btn btn-outline">联系我</a><div class="qr-popup"><img src="wechat.jpg" alt="WeChat QR"><span class="qr-text">扫一扫添加微信</span></div></div>
+            </div>
+        </div>
+        
+        <div class="hero-image">
+            <div class="profile-container">
+                <div class="rotating-border"></div>
+                <div class="image-card"><img src="profile.jpg" alt="Karen"></div>
+                <div class="float-tag tag-bottom-left">🎨 10年设计行业经验</div>
+                <div class="float-tag tag-top-right"><div class="tag-title">👋 我是干圆圆</div><div class="tag-subtitle">7年 UI/UX 设计师</div></div>
+            </div>
+        </div>
+    </header>
+
+    <div class="works-section-bg">
+        <div class="container">
+            <div class="section-header"><h3 class="section-title">Featured Project 精选项目</h3></div>
+            <div class="project-list">
+                
+                <a href="lovespouse.html" class="project-card">
+                    <div class="card-image-box"><img src="1.jpg" alt="Lovespouse App"></div>
+                    <div class="card-content">
+                        <div class="card-top-meta"><img src="logo-1.png" class="project-logo" alt="icon">Lovespouse</div>
+                        <div class="arrow-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg></div>
+                        <h2 class="project-title">Lovespouse App</h2>
+                        <div class="project-title-cn">海外情侣社交应用改版</div>
+                        <span class="project-year-text">2025.9-12</span>
+                        <p class="project-desc">优化 V3.1.0 至 V3.1.5 版本体验，建立情侣绑定模式与轻社交互动体系。</p>
+                        <div class="tags"><span class="tag">UI/UX</span><span class="tag">智能工具+轻社交 App</span><span class="tag">设计系统</span><span class="tag">Mobile</span></div>
+                    </div>
+                </a>
+
+                <a href="yunshiji.html" class="project-card">
+                    <div class="card-image-box"><img src="2.jpg" alt="Cloud Market"></div>
+                    <div class="card-content">
+                        <div class="card-top-meta"><img src="logo-2.png" class="project-logo" alt="icon">云市集</div>
+                        <div class="arrow-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg></div>
+                        <h2 class="project-title">Cloud Market</h2>
+                        <div class="project-title-cn">云市集电商小程序</div>
+                        <span class="project-year-text">2023.06-08</span>
+                        <p class="project-desc">从 0 到 1 打造的线上购物小程序，构建完整的电商交易链路与视觉规范。</p>
+                        <div class="tags"><span class="tag">UI/UX</span><span class="tag">小程序</span><span class="tag">AI 人工智能</span></div>
+                    </div>
+                </a>
+
+                <a href="wechoose.html" class="project-card">
+                    <div class="card-image-box"><img src="4.jpg" alt="Wechoose SaaS"></div>
+                    <div class="card-content">
+                        <div class="card-top-meta"><img src="logo-4.png" class="project-logo" alt="icon">Wechoose</div>
+                        <div class="arrow-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg></div>
+                        <h2 class="project-title">Wechoose Financial</h2>
+                        <div class="project-title-cn">中小企业财务 SaaS 系统</div>
+                        <span class="project-year-text">2021.09</span>
+                        <p class="project-desc">专为中小型外贸企业打造的财务 SaaS 系统，简化记账流程，提升管理效率。</p>
+                        <div class="tags"><span class="tag">SaaS</span><span class="tag">Design System</span><span class="tag">Web</span></div>
+                    </div>
+                </a>
+
+                <a href="qingyun.html" class="project-card">
+                    <div class="card-image-box"><img src="5.jpg" alt="Smart Hotel"></div>
+                    <div class="card-content">
+                        <div class="card-top-meta"><img src="logo-5.png" class="project-logo" alt="icon">青云酒店</div>
+                        <div class="arrow-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg></div>
+                        <h2 class="project-title">Qingyun Smart Hotel</h2>
+                        <div class="project-title-cn">青云智慧酒店官网</div>
+                        <span class="project-year-text">2021.04</span>
+                        <p class="project-desc">展示一站式智慧酒店管理方案，重点突出灵活用工与清洁管理的核心优势。</p>
+                        <div class="tags"><span class="tag">Web</span><span class="tag">PMS酒店管理系统</span><span class="tag">Mobile</span></div>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="testimonials-section">
+        <div class="testimonials-header"><h2 class="testimonials-title">Reflections from peers and leaders</h2><p class="testimonials-subtitle">来自同事和领导的反馈</p></div>
+        <div class="marquee-wrapper">
+            <div class="marquee-track">
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"App上线后获得了同事和领导的一致好评，Karen输出的设计规范，为后续的新功能开发提升了很大的效率。"</p>
+                    <div class="star-rating"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
+                    <div class="testimonial-author"><div class="author-avatar">👩🏻‍💼</div><div class="author-info"><h4>Product Manager</h4><p>威步智能物联</p></div></div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"Karen主导的智能化管理平台，将跨部门协作的信息错漏率显著降低，设计与开发协作效率提升了约30%。"</p>
+                    <div class="star-rating"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
+                    <div class="testimonial-author"><div class="author-avatar">👨🏻‍💻</div><div class="author-info"><h4>Tech Lead</h4><p>傲物科技</p></div></div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"青云酒店官网改版上线后，不仅还原度高达98%，而且即便过了很久，领导和同事依然对这套设计赞不绝口。"</p>
+                    <div class="star-rating"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
+                    <div class="testimonial-author"><div class="author-avatar">👨🏻‍💼</div><div class="author-info"><h4>Project Director</h4><p>马小二科技</p></div></div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"具备非常扎实的设计系统能力，建立的Design Token和组件库，让团队协作变得非常顺畅。"</p>
+                    <div class="star-rating"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
+                    <div class="testimonial-author"><div class="author-avatar">👩🏻‍🎨</div><div class="author-info"><h4>Senior Designer</h4><p>Peer Review</p></div></div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"App上线后获得了同事和领导的一致好评，Karen输出的设计规范，为后续的新功能开发提升了很大的效率。"</p>
+                    <div class="star-rating"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
+                    <div class="testimonial-author"><div class="author-avatar">👩🏻‍💼</div><div class="author-info"><h4>Product Manager</h4><p>威步智能物联</p></div></div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-text">"Karen主导的智能化管理平台，将跨部门协作的信息错漏率显著降低，设计与开发协作效率提升了约30%。"</p>
+                    <div class="star-rating"><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i><i class="ri-star-fill"></i></div>
+                    <div class="testimonial-author"><div class="author-avatar">👨🏻‍💻</div><div class="author-info"><h4>Tech Lead</h4><p>傲物科技</p></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="faq-section">
+        <div class="faq-container">
+            <div class="section-header"><h3 class="section-title">FAQ</h3></div>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <div class="faq-question-box"><div class="faq-question-en">What is your UX process?</div><div class="faq-question-cn">你的用户体验流程是什么？</div></div>
+                        <div class="faq-toggle-btn">+</div>
+                    </div>
+                    <div class="faq-body"><div class="faq-answer"><p>我的设计流程通常始于对用户需求和竞品的深入研究。接着我会构建信息架构并绘制线框图。之后，利用 Figma 制作高保真原型，并通过可用性测试来验证设计。最后，我会确保设计与开发团队的无缝对接，并持续关注上线后的数据反馈。</p></div></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <div class="faq-question-box"><div class="faq-question-en">Why did you choose UI/UX design?</div><div class="faq-question-cn">你为什么选择产品设计？</div></div>
+                        <div class="faq-toggle-btn">+</div>
+                    </div>
+                    <div class="faq-body"><div class="faq-answer"><p>我被 UX/UI 设计所吸引，因为它融合了技术、可用性和美学。设计不仅视觉吸引人，而且功能齐全的数字解决方案令人无比振奋。看到设计如何影响用户行为并帮助他们实现目标，这非常有趣。此外，我擅长解决问题，能够化繁为简，这使我能够创造出直观且无缝的用户体验。</p></div></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <div class="faq-question-box"><div class="faq-question-en">What tools do you use?</div><div class="faq-question-cn">你使用哪些工具？</div></div>
+                        <div class="faq-toggle-btn">+</div>
+                    </div>
+                    <div class="faq-body"><div class="faq-answer"><p>我精通 <strong>Figma、sketch、Pixso、Master Go</strong> 进行界面设计和高保真原型制作。同时，我也熟练使用 Adobe (PS, AI,AE) 处理视觉和微动效，以及 XMind 进行逻辑梳理。在团队协作中，我会搭建完善的 Design Token 系统，熟悉基础的html css及react编程确保开发还原度。</p></div></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <div class="faq-question-box"><div class="faq-question-en">Are you open to new opportunities?</div><div class="faq-question-cn">你现在接受新机会吗？</div></div>
+                        <div class="faq-toggle-btn">+</div>
+                    </div>
+                    <div class="faq-body"><div class="faq-answer"><p>是的！我目前正在寻找 UI/UX 设计师的职位机会。我拥有 7 年的设计经验，随时准备为您的团队带来价值。欢迎通过微信或邮件与我联系。</p></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="skills-section">
+        <div class="skills-container">
+            <div class="section-header"><h3 class="section-title">My Skills 技能栈</h3></div>
+            <div class="skills-playground" id="playground">
+                <div class="skills-hint"><i class="ri-drag-move-2-fill"></i><span>尝试并点击拖动</span></div>
+                <div class="skill-pill">移动App设计</div>
+                <div class="skill-pill">Web网页端设计</div>
+                <div class="skill-pill">运营视觉设计</div>
+                <div class="skill-pill">平面海报</div>
+                <div class="skill-pill">宣传画册</div>
+                <div class="skill-pill">H5小程序</div>
+                <div class="skill-pill">文化墙及易拉宝</div>
+                <div class="skill-pill">大屏数据可视化</div>
+                <div class="skill-pill">SaaS</div>
+                <div class="skill-pill">B端后台</div>
+                <div class="skill-pill">AIGC辅助设计</div>
+                <div class="skill-pill">AE微动效</div>
+                <div class="skill-pill">手绘插画</div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">©️2026 干圆圆 Karen Kan</footer>
+
+    <script>
+        // 1. 动态背景
+        const glow = document.querySelector('.cursor-glow');
+        const emojiCursor = document.querySelector('.emoji-cursor');
+        const faqSection = document.querySelector('.faq-section');
+        const emojis = ['🍀', '🌟', '💗', '❤️', '✨'];
+        window.addEventListener('mousemove', (e) => {
+            glow.style.setProperty('--x', e.clientX + 'px');
+            glow.style.setProperty('--y', e.clientY + 'px');
+            emojiCursor.style.left = e.clientX + 'px';
+            emojiCursor.style.top = e.clientY + 'px';
+        });
+        faqSection.addEventListener('mouseenter', () => {
+            emojiCursor.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            emojiCursor.classList.add('active');
+        });
+        faqSection.addEventListener('mouseleave', () => { emojiCursor.classList.remove('active'); });
+
+        // 2. FAQ Logic
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach(item => {
+            item.addEventListener('click', () => {
+                if (item.classList.contains('active')) {
+                    item.classList.remove('active');
+                    item.querySelector('.faq-body').style.maxHeight = null;
+                } else {
+                    faqItems.forEach(i => { i.classList.remove('active'); i.querySelector('.faq-body').style.maxHeight = null; });
+                    item.classList.add('active');
+                    const body = item.querySelector('.faq-body');
+                    body.style.maxHeight = body.scrollHeight + "px";
+                }
+            });
+        });
+
+        // 3. 物理引擎
+        const container = document.getElementById('playground');
+        const pills = document.querySelectorAll('.skill-pill');
+        
+        const Engine = Matter.Engine, Render = Matter.Render, Runner = Matter.Runner, Bodies = Matter.Bodies, Composite = Matter.Composite, Mouse = Matter.Mouse, MouseConstraint = Matter.MouseConstraint, Events = Matter.Events;
+        const engine = Engine.create(); const world = engine.world;
+        const width = container.clientWidth; const height = container.clientHeight;
+
+        const render = Render.create({
+            element: container, engine: engine,
+            options: { width: width, height: height, background: 'transparent', wireframes: false, showAngleIndicator: false }
+        });
+        render.canvas.style.position = 'absolute'; render.canvas.style.top = '0'; render.canvas.style.left = '0'; render.canvas.style.pointerEvents = 'auto'; render.canvas.style.opacity = '0';
+
+        Render.run(render);
+        const runner = Runner.create(); Runner.run(runner, engine);
+
+        const wallOptions = { isStatic: true, render: { visible: false } };
+        const floor = Bodies.rectangle(width / 2, height + 30, width, 60, wallOptions);
+        const ceiling = Bodies.rectangle(width / 2, -30, width, 60, wallOptions);
+        const leftWall = Bodies.rectangle(-30, height / 2, 60, height, wallOptions);
+        const rightWall = Bodies.rectangle(width + 30, height / 2, 60, height, wallOptions);
+        Composite.add(world, [floor, ceiling, leftWall, rightWall]);
+
+        const pillBodies = [];
+        pills.forEach((pill, index) => {
+            pill.style.visibility = 'visible';
+            const rect = pill.getBoundingClientRect(); const w = rect.width; const h = rect.height;
+            const x = Math.random() * (width - 100) + 50; const y = Math.random() * (height - 100) + 50;
+            const body = Bodies.rectangle(x, y, w, h, { chamfer: { radius: h / 2 }, restitution: 0.6, friction: 0.1, frictionAir: 0.02, angle: Math.random() * Math.PI * 0.5 - 0.25 });
+            pillBodies.push({ dom: pill, body: body }); Composite.add(world, body);
+        });
+
+        const mouse = Mouse.create(render.canvas);
+        const mouseConstraint = MouseConstraint.create(engine, { mouse: mouse, constraint: { stiffness: 0.2, render: { visible: false } } });
+        Composite.add(world, mouseConstraint);
+        mouseConstraint.mouse.element.removeEventListener("mousewheel", mouseConstraint.mouse.mousewheel);
+        mouseConstraint.mouse.element.removeEventListener("DOMMouseScroll", mouseConstraint.mouse.mousewheel);
+
+        Events.on(engine, 'afterUpdate', () => {
+            pillBodies.forEach((item) => {
+                const { x, y } = item.body.position; const angle = item.body.angle;
+                item.dom.style.transform = `translate(${x - item.dom.offsetWidth/2}px, ${y - item.dom.offsetHeight/2}px) rotate(${angle}rad)`;
+            });
+        });
+
+        window.addEventListener('resize', () => {
+            const newWidth = container.clientWidth; const newHeight = container.clientHeight;
+            Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight + 30 });
+            Matter.Body.setPosition(rightWall, { x: newWidth + 30, y: newHeight / 2 });
+            render.canvas.width = newWidth; render.canvas.height = newHeight;
+        });
+    </script>
+</body>
+</html>
