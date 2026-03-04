@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lovespouse App - Case Study</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-body: #ffffff;
+            --text-main: #111111;
+            --text-gray: #555555;
+            --accent-color: #8A4EF4; 
+            --accent-light: rgba(255, 89, 170, 0.08);
+            --rebel-green: #d4f568; 
+            --nav-height: 70px;
+            /* 核心宽度控制：统一为 1400px，与 Rebel Foods 保持一致 */
+            --content-width: 1400px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Manrope', 'Noto Sans SC', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-top: var(--nav-height);
+            overflow-x: hidden;
+        }
+
+        /* === 1. 进度条 === */
+        .progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 4px; z-index: 2000; background: transparent; }
+        .progress-bar { height: 4px; background: linear-gradient(to right, rgba(255, 89, 170, 0.3), #FF59AA); width: 0%; transition: width 0.1s; }
+
+        /* === 2. 顶部导航 === */
+        nav {
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--nav-height);
+            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 40px; z-index: 1000; border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.2rem; text-decoration: none; color: var(--text-main); }
+        .brand img { height: 28px; width: auto; display: block; }
+        
+        .menu { display: flex; gap: 30px; }
+        .nav-link { text-decoration: none; color: var(--text-gray); font-weight: 600; font-size: 0.95rem; transition: color 0.3s; }
+        .nav-link:hover { color: #000; }
+
+        /* === 3. Hero & Header === */
+        .project-header-info { 
+            max-width: 1000px; margin: 0 auto; text-align: center; 
+            padding-top: 80px; padding-bottom: 60px; 
+        }
+        .project-meta-top { font-size: 0.9rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
+        .project-main-title { font-size: 3.5rem; font-weight: 800; line-height: 1.15; margin-bottom: 24px; color: #111; }
+        .project-sub-title { font-size: 1.4rem; color: #666; font-weight: 500; max-width: 800px; margin: 0 auto; }
+
+        /* 顶部大图容器：宽度与下方内容严格一致 */
+        .project-hero-wrapper { 
+            width: 100%; 
+            max-width: var(--content-width); /* 锁定最大宽度 */
+            margin: 0 auto 80px auto; /* 居中 */
+            padding: 0 20px; /* 移动端留白 */
+        }
+        .project-hero-image { 
+            width: 100%; aspect-ratio: 16/9; 
+            background-color: #f0f0f0; overflow: hidden; 
+            border-radius: 24px; 
+            box-shadow: 0 20px 60px -10px rgba(0,0,0,0.1); 
+        }
+        .project-hero-image img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* === 4. 主内容布局 (核心修复) === */
+        .content-wrapper { 
+            max-width: var(--content-width); /* 宽度统一为 1400px */
+            margin: 0 auto; 
+            display: flex; /* 开启 Flex 布局 */
+            gap: 60px;     /* 左侧目录与右侧内容的间距 */
+            padding: 0 20px 100px 20px;
+            position: relative; 
+        }
+        
+        /* 左侧目录 (Sticky) */
+        .toc-sidebar { 
+            width: 240px; 
+            flex-shrink: 0; 
+            position: sticky; 
+            top: 100px; 
+            height: fit-content; 
+            display: none; /* 默认隐藏，JS控制显示 */
+            opacity: 0; 
+            transition: opacity 0.5s ease;
+        }
+        /* 当加上 active 类时显示 */
+        .toc-sidebar.visible { display: block; opacity: 1; }
+
+        .toc-label { font-size: 0.75rem; font-weight: 800; color: #bbb; letter-spacing: 1.5px; margin-bottom: 24px; text-transform: uppercase; }
+        .toc-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+        .toc-link { text-decoration: none; color: #999; font-size: 1rem; font-weight: 500; transition: all 0.2s; position: relative; display: block; }
+        .toc-link:hover { color: #000; }
+        .toc-link.active { color: #000; font-weight: 800; }
+        .toc-link.active::before { content: '●'; position: absolute; left: -18px; color: #FF59AA; font-size: 0.6rem; top: 7px; }
+
+        /* 锚点滚动偏移：点击左侧目录时，目标不被固定顶栏遮挡 */
+        #overview, #challenge, #research, #design, #results {
+            scroll-margin-top: calc(var(--nav-height) + 24px);
+        }
+
+        /* 右侧主要内容区 */
+        .main-content { 
+            flex: 1; 
+            min-width: 0; /* 防止子元素撑破 flex 容器 */
+        }
+
+        /* === 5. Overview 板块 === */
+        .info-grid {
+            display: grid; grid-template-columns: 280px 1fr; gap: 60px;
+            margin-bottom: 120px; align-items: start;
+        }
+        .meta-item { margin-bottom: 40px; }
+        .meta-item h4 { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; color: #999; letter-spacing: 1px; }
+        .meta-item p { font-size: 1rem; color: #111; line-height: 1.5; margin: 0; font-weight: 600; }
+        .overview-text { font-size: 1.25rem; line-height: 1.8; color: #333; font-weight: 400; }
+        .highlight-bg { background: #eef2ff; padding: 0 6px; border-radius: 4px; color: #8A4EF4; font-weight: 600; }
+
+        /* === 6. T型布局 (大标题 + 左右分栏) === */
+        .big-section-title {
+            font-size: 3rem; font-weight: 800; color: #111;
+            margin-top: 0; margin-bottom: 60px; padding-top: 60px;
+            border-top: 1px solid #eee; line-height: 1.2;
+        }
+
+        .rebel-grid-layout {
+            display: grid; 
+            grid-template-columns: 280px 1fr; /* 左侧固定，右侧自适应 */
+            gap: 60px; 
+            align-items: start; margin-bottom: 120px;
+        }
+
+        .rebel-left-col { position: sticky; top: 120px; }
+        .sub-heading { font-size: 1.8rem; font-weight: 700; color: #111; line-height: 1.3; margin: 0; margin-top: -5px; }
+
+        .rebel-right-col { width: 100%; }
+        .intro-text { font-size: 1.2rem; color: #444; line-height: 1.7; margin-bottom: 40px; }
+        .marker { background: linear-gradient(180deg, transparent 60%, #d4f568 60%); padding: 0 4px; font-weight: 600; color: #000; }
+
+        /* 白色卡片组 */
+        .grey-card-container {
+            background: #f9f9f9; border-radius: 24px; padding: 40px;
+            display: flex; flex-direction: column; gap: 24px;
+        }
+        .white-card-item {
+            display: flex; gap: 20px; align-items: flex-start;
+            background: #ffffff; padding: 24px; border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .icon-box {
+            width: 48px; height: 48px; background: #f2f2f7; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: #8A4EF4; flex-shrink: 0;
+        }
+        .text-box h4 { font-size: 1.1rem; font-weight: 700; margin: 0 0 6px 0; color: #111; }
+        .text-box p { font-size: 1rem; color: #666; margin: 0; line-height: 1.5; }
+        
+        .content-img { width: 100%; border-radius: 16px; margin: 32px 0; display: block; border: 1px solid #eee; }
+
+        /* 通用外边距工具类，替代 inline style */
+        .mb-16 { margin-bottom: 16px; }
+        .mb-20 { margin-bottom: 20px; }
+        .mb-40 { margin-bottom: 40px; }
+        .mb-60 { margin-bottom: 60px; }
+
+        /* 方案说明文字样式（替代 inline style） */
+        .solution-subtitle {
+            margin-bottom: 40px;
+            font-size: 1.2rem;
+            color: #555;
+        }
+
+        /* === 新增：双图无缝合并样式 === */
+.merged-image-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column; /* 让图片竖向排列 */
+    border-radius: 16px;    /* 统一的大圆角只加在容器上 */
+    overflow: hidden;       /* 裁剪内部图片，确保圆角生效 */
+    border: 1px solid #eee; /* 边框加在容器上 */
+    margin: 40px 0 80px 0;  /* 保持原本的外部呼吸感 */
+}
+
+.merged-img {
+    width: 100%;
+    height: auto;
+    display: block;         /* 关键：消除图片底部的默认微小缝隙 */
+    margin: 0 !important;   /* 强制去除间距 */
+    border: none;           /* 去除图片自身的边框 */
+    border-radius: 0;       /* 去除图片自身的圆角 */
+}
+
+        /* === 7. Design Solution & 拖拽样式 === */
+        .statement-card {
+            background: #fbfbfb; border: 1px solid #eee; border-radius: 32px;
+            padding: 80px 40px; text-align: center; margin-bottom: 60px;
+            position: relative; overflow: hidden;
+        }
+        .statement-icon { width: 50px; height: 50px; margin: 0 auto 20px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: var(--accent-color); font-size: 24px; }
+        .statement-title { font-size: 2.2rem; font-weight: 800; color: #111; line-height: 1.3; max-width: 800px; margin: 0 auto; }
+
+        /* 设计方案：亮/暗原型对比切换卡片 */
+        .prototype-toggle-card {
+            margin: 40px 0 60px 0;
+            border-radius: 24px;
+            background: #f7f7f8;
+            border: 1px solid #eee;
+            padding: 24px 24px 28px 24px;
+            box-shadow: 0 14px 40px rgba(0,0,0,0.04);
+        }
+        .prototype-toggle-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        .prototype-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #888;
+        }
+        .prototype-switch {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px;
+            border-radius: 999px;
+            border: none;
+            background: #e5e5eb;
+            cursor: pointer;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555;
+        }
+        .prototype-switch-label {
+            padding: 4px 10px;
+            z-index: 2;
+        }
+        .prototype-switch-knob {
+            position: absolute;
+            top: 3px;
+            bottom: 3px;
+            width: 50%;
+            border-radius: 999px;
+            background: #111;
+            transition: transform 0.22s ease, background 0.22s ease;
+        }
+        .prototype-switch.light .prototype-switch-knob {
+            transform: translateX(0);
+            background: #ffffff;
+        }
+        .prototype-switch.dark .prototype-switch-knob {
+            transform: translateX(100%);
+            background: #111111;
+        }
+        .prototype-switch.light .prototype-switch-label--light {
+            color: #111;
+        }
+        .prototype-switch.dark .prototype-switch-label--dark {
+            color: #fff;
+        }
+
+        .prototype-frame {
+            position: relative;
+            width: 100%;
+            border-radius: 18px;
+            overflow: hidden;
+            background: #ddd;
+        }
+        .prototype-image {
+            display: none;
+            width: 100%;
+            height: auto;
+        }
+        .prototype-image.active {
+            display: block;
+        }
+
+        /* 跑马灯 */
+        .marquee-wrapper { width: 100%; overflow: hidden; padding: 20px 0; background: transparent; }
+        .marquee-track { display: flex; width: max-content; gap: 20px; }
+        .marquee-item { height: 280px; width: auto; border-radius: 16px; border: 1px solid #eee; flex-shrink: 0; }
+        @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes scroll-right { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+        .scroll-left .marquee-track { animation: scroll-left 40s linear infinite; }
+        .scroll-right .marquee-track { animation: scroll-right 40s linear infinite; }
+
+        /* === 🔥 拖拽画框 + 方案卡片 === */
+        .solution-item { 
+            margin-bottom: 80px; /* 统一各方案块之间的垂直间距，避免过大割裂感 */
+        }
+        .solution-item h3 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; color: #111; }
+        
+        .drag-scroll-wrapper {
+            position: relative; width: 100%; border-radius: 20px;
+            overflow: hidden; /* 隐藏溢出，形成画框 */
+            box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05); background: #f9f9f9; margin-top: 24px;
+        }
+        .drag-hint {
+            position: absolute; top: 20px; right: 20px;
+            background: #d4f568; color: #000; padding: 8px 16px; border-radius: 30px;
+            font-size: 13px; font-weight: 700; z-index: 10; pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .drag-container { 
+            overflow: hidden; cursor: grab; position: relative; 
+            display: block; /* 确保是 block 布局 */
+        }
+        .drag-container:active { cursor: grabbing; }
+
+        /* A. 竖向长图 (首页/金币) -> 宽度100%，高度自动，上下拖 */
+        .vertical-mode { 
+            height: 700px; /* 画框高度 */
+            width: 100%; 
+        }
+        .vertical-mode img { 
+            width: 100%;      /* 撑满容器宽度 */
+            height: auto;     /* 高度自适应 */
+            display: block; pointer-events: none; 
+            transition: transform 0.25s ease-out;
+            transform-origin: center;
+        }
+        /* 悬浮时略微放大，方便细节查看（仍在画框内） */
+        .drag-container.vertical-mode:hover img {
+            transform: scale(1.12);
+        }
+
+        /* B. 横向宽图 (互控乐园) -> 横向滚动 */
+        .horizontal-mode { 
+            height: 650px;    /* 设定画框高度 */
+            width: 100%; 
+            overflow-x: auto; 
+            display: flex; 
+            align-items: flex-start;
+        }
+        
+        .horizontal-mode img { 
+            height: 100% !important; 
+            width: auto !important;  
+            max-width: none !important; 
+            display: block; 
+            pointer-events: none; 
+        }
+
+        /* C. 画框内四向拖动 (Frame + Pan) - 参考 Rebel Foods 画框效果 */
+        .frame-pan-mode {
+            position: relative;
+            width: 100%;
+            height: 650px;
+            overflow: hidden;
+            cursor: grab;
+            background: #f5f5f5;
+            border-radius: inherit;
+        }
+        .frame-pan-mode:active { cursor: grabbing; }
+        .frame-pan-mode .pan-inner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            will-change: transform;
+        }
+        .frame-pan-mode .pan-inner img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* 8. 底部 */
+        .next-navigation { max-width: var(--content-width); margin: 0 auto; padding: 0 20px 120px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .nav-card { display: flex; flex-direction: column; justify-content: center; padding: 40px; background: linear-gradient(145deg, #ffffff 0%, #f8f9fc 100%); border: 1px solid #fff; border-radius: 24px; text-decoration: none; color: inherit; box-shadow: 0 10px 30px rgba(0,0,0,0.03); transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .nav-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: #e0e0e0; }
+        .nav-label { font-size: 0.85rem; font-weight: 700; color: #999; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+        .nav-title { font-size: 1.8rem; font-weight: 800; color: #111; line-height: 1.2; }
+        .nav-arrow { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); width: 48px; height: 48px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: all 0.3s; }
+        .nav-card:hover .nav-arrow { background: #000; color: #fff; transform: translateY(-50%) scale(1.1); }
+
+        @media (max-width: 900px) {
+            .content-wrapper { flex-direction: column; }
+            .toc-sidebar { display: none !important; }
+            .info-grid { grid-template-columns: 1fr; gap: 40px; }
+            .rebel-grid-layout { grid-template-columns: 1fr; gap: 30px; }
+            .vertical-mode, .horizontal-mode, .frame-pan-mode { height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+
+    <nav>
+        <a href="index.html" class="brand"><img src="logo.png" alt="Logo"> Karen Design</a>
+        <div class="menu">
+            <a href="index.html" class="nav-link">项目</a>
+            <a href="services.html" class="nav-link">我能做什么？</a>
+            <a href="#" class="nav-link">经验沉淀</a>
+        </div>
+    </nav>
+
+    <section class="project-header-info">
+        <div class="project-meta-top">云市集 • 2023年6月～8月</div>
+        <h1 class="project-main-title">云市集<br>好菜不贵，到家不累</br></h1>
+        <div class="project-sub-title">打造AI+社区购物的新生活方式</div>
+    </section>
+
+    <div class="project-hero-wrapper">
+        <div class="project-hero-image">
+            <img src="yunshiji-hero-01（1）.jpg" alt="Hero Image">
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        
+        <aside class="toc-sidebar" id="tocSidebar">
+            <div class="toc-label">Contents</div>
+            <ul class="toc-list">
+                <li><a href="#overview" class="toc-link">Overview 概述</a></li>
+                <li><a href="#challenge" class="toc-link">The Challenge 挑战</a></li>
+                <li><a href="#research" class="toc-link">Research & Notes 思考</a></li>
+                <li><a href="#design" class="toc-link">Design Solution 方案</a></li>
+                <li><a href="#results" class="toc-link">Results 结果</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            
+            <div class="info-grid" id="overview">
+                <div class="info-col meta-column">
+                    <div class="meta-item">
+                        <h4>我的角色</h4>
+                        <p style="margin-top: 44px;">独立设计品牌&UI</p>
+                        <p style="font-size:0.9rem; color:#666; margin-top:12px;">定义设计系统、调研分析、界面输出</p>
+                    </div>
+                    <div class="meta-item">
+                        <h4>团队</h4>
+                        <p>我 (UI设计师)</p>
+                        <p style="font-size:0.9rem; color:#666; margin-top:4px;">云集市app0～1版本<br>logo设计</p>
+                        <p style="margin-top: 16px;">其他成员</p>
+                        <p style="font-size:0.9rem; color:#666; margin-top:4px;">运营1人、产品1人、开发&测试7人</p>
+                    </div>
+                    <div class="meta-item">
+                        <h4>时间线</h4>
+                        <p>2023年 6月 - 8月</p>
+                    </div>
+                </div>
+
+                <div class="info-col">
+                    <div class="overview-text">
+                        <h4>项目概览</h4> 
+                        <p style="margin-top: 24px;">
+                            云市集消费者端，主要针对追求品质生活，关注食品健康的人群，是一款自营生鲜配送的电商平台，涵盖了水果蔬菜、肉禽蛋类、水产海鲜及休闲零食等食品。依托高效的运营模式，为菜品新鲜保驾护航，解决用户买菜耗时问题。为更多消费者带去新鲜、丰富、价优、安全的生鲜食材和配送服务。
+                        </p>
+                        <p style="margin-top: 24px;">
+                            市面上的竞品都在解决“买得快”的问题，而云市集致力于解决"买得开心"和"决策效率"的问题。我们不是要在供应链上打败同类社区购物小程序，而是在购物体验上通过 AI+常规选购 开辟新赛道。”
+                        </p> 
+                        <div style="display:flex; gap:40px; margin-top:30px; padding-top:20px; border-top:1px dashed #eee;">
+                            <div><div style="font-size:1.8rem; font-weight:800; color:#8A4EF4;">88+</div><div style="font-size:0.8rem; color:#666; font-weight:600; text-transform:uppercase;">高保真界面设计</div></div>
+                            <div><div style="font-size:1.8rem; font-weight:800; color:#8A4EF4;">1套</div><div style="font-size:0.8rem; color:#666; font-weight:600; text-transform:uppercase;">完整组件库与设计规范</div></div>
+                            <div><div style="font-size:1.8rem; font-weight:800; color:#8A4EF4;">3大</div><div style="font-size:0.8rem; color:#666; font-weight:600; text-transform:uppercase;">核心体验链路(AI导购/购物/会员)</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <section id="challenge">
+                <h2 class="big-section-title">设计挑战</h2>
+                <div class="rebel-grid-layout">
+                    <div class="rebel-left-col">
+                        <h3 class="sub-heading">挑战与痛点</h3>
+                    </div>
+                    <div class="rebel-right-col">
+                        <p class="intro-text">
+                            生鲜电商的核心在于“所见即所得”的信任感。然而，传统货架电商冷冰冰的商品列表无法传递食材的“烟火气”。而云市集的用户跨度为22～55岁之间。<br>
+                            <br>最大的挑战在于：<span class="marker">打破“数字冷感”与“生鲜温感”的体验壁垒</span>
+                        </p>
+                        <div class="grey-card-container">
+                            <div class="white-card-item">
+                                <div class="icon-box"><i class="ri-flashlight-line"></i></div>
+                                <div class="text-box">
+                                    <h4>感官与信任孤岛</h4>
+                                    <p>传统模式下，用户购买非标品（生鲜）极度缺乏安全感。图片与实物的落差、新鲜度的不可见，导致用户决策链路极长，购物车放弃率居高不下。</p>
+                                </div>
+                            </div>
+                            <div class="white-card-item">
+                                <div class="icon-box"><i class="ri-money-dollar-circle-line"></i></div>
+                                <div class="text-box">
+                                    <h4>信息过载与决策疲劳</h4>
+                                    <p>年轻上班族面临严重的“不知道吃什么”焦虑。海量的商品分类不仅没有提升效率，反而增加了用户的认知负荷与挑选时间。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="research">
+                <h2 class="big-section-title">研究&思考</h2>
+                <div class="rebel-grid-layout">
+                    <div class="rebel-left-col">
+                        <h3 class="sub-heading">定义问题</h3>
+                    </div>
+                    <div class="rebel-right-col">
+                        <p class="intro-text">
+                            跳出传统生鲜APP“单纯卖货”的工具属性，构建<strong>“AI智能导购 + 沉浸式视觉 + 全龄友好”</strong>的新一代市集生态。通过体验维度的降维打击，提升用户的决策效率与平台粘性。<br>
+                            <br>核心业务目标：<span class="marker">“如何用前沿的AI技术，重塑生鲜市集的市井烟火气与人情味？”</span>
+                        </p>
+                        
+                        <div class="grey-card-container">
+                            <div class="white-card-item">
+                                <div class="icon-box"><i class="ri-emotion-line"></i></div>
+                                <div class="text-box">
+                                    <h4>AI 场景化决策</h4>
+                                    <p>引入“AI小云”智能助手，将传统的“人找货”转化为“场景化主动推荐”（如一键生成减脂餐），极大缩短年轻用户的购买决策时间，提升转化率。</p>
+                                </div>
+                            </div>
+                            <div class="white-card-item">
+                                <div class="icon-box"><i class="ri-shield-check-line"></i></div>
+                                <div class="text-box">
+                                    <h4>游戏化生态构建（信任与留存）</h4>
+                                    <p>建立透明的可视化溯源机制（视频看菜）打消品质疑虑；同时引入3D IP伴随与VIP积分游戏化体系，将低频的“买菜”转化为高频的“养成打卡”，有效建立品牌粘性与信任感。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="merged-image-container">
+                    <img src="yunshiji-research-01.jpg" alt="UI Research" class="merged-img">
+                    <img src="yunshiji-research-04.jpg" alt="UI Research" class="merged-img">
+                    <img src="yunshiji-research-02.jpg" alt="UI Research" class="merged-img">
+                    <img src="yunshiji-hero-02.jpg" alt="UI Research" class="merged-img">
+                    <img src="yunshiji-research-03.jpg" alt="UI Research" class="merged-img">
+                    <img src="yunshiji-hero-03.jpg" alt="UI Research" class="merged-img">
+                </div>
+            </section>
+
+            <section id="design">
+                <h2 class="big-section-title">设计方案</h2>
+                
+                <div class="statement-card">
+                    <div class="statement-icon"><i class="ri-lightbulb-flash-line"></i></div>
+                    <h2 class="statement-title">
+                        而云市集致力于解决“买得开心”和“决策效率”的问题，用<span style="color:#8A4EF4;">“在常规购物体验中增加AI互动”</span>开辟新赛道的购物体验<br>
+                        <span style="color:#8A4EF4;"></span>
+                    </h2>
+                </div>
+
+                <img src="yunshiji-solution-01.jpg" class="content-img mb-20" alt="Solution Overview">
+
+
+                <div class="solution-item">
+                    <h3>01. 品牌定义</h3>
+                    <p>以<strong>“云”</strong> 作为视觉核心，通过极简的线条勾勒出信任感与创新力。我们将品牌基因深度植入产品生态，结合3D IP形象，构建出一套高辨识度且具有亲和力的设计语言，为用户打造直观、轻盈的交互认知体验。 </p>
+                    <div class="merged-image-container">
+                        <img src="yunshiji-solution-02.jpg" alt="UI Research" class="merged-img">
+                        <img src="yunshiji-solution-03.jpg" alt="UI Research" class="merged-img">
+                        <img src="yunshiji-solution-03-01.jpg" alt="UI Research" class="merged-img">
+                    </div>
+                </div>
+
+                <div class="solution-item">
+                    <h3>02. 定义设计系统</h3>
+                    <p>为了确保品牌视觉在产品全链路中的一致性与高效产出，我们建立了一套严谨的“云市”设计系统。通过对色彩、字体、图标及栅格的精细化定义，将感性的品牌理念转化为理性的设计规范，为后续多端适配及体验升级提供底层支撑。</p>
+                    <div class="merged-image-container">
+                        <img src="yunshiji-solution-04.jpg" alt="UI Research" class="merged-img">
+                    </div>
+                </div>
+
+                <div class="solution-item">
+                    <h3>03. 界面展示</h3>
+                    <p>基于前期确立的设计规范，我们将“云市集”品牌基因全方位注入产品界面。通过重塑核心业务路径，我们在确保视觉张力的同时，大幅提升了操作的直观性。从资产管理到多维交互，旨在为用户打造一个高效、轻盈且充满情感化反馈的全场景数字空间。</p>
+                    <div class="merged-image-container">
+                        <img src="yunshiji-solution-05.jpg" alt="UI Research" class="merged-img">
+                        <img src="yunshiji-solution-05_1.png" alt="UI Research" class="merged-img">
+                        <img src="yunshiji-solution-06.jpg" alt="UI Research" class="merged-img">
+                        <img src="yunshiji-solution-07.jpg" alt="UI Research" class="merged-img">
+                        <img src="yunshiji-solution-08.jpg" alt="UI Research" class="merged-img">
+                        <img src="yunshiji-solution-09.jpg" alt="UI Research" class="merged-img">
+                        <img src="yunshiji-solution-10.jpg" alt="UI Research" class="merged-img">
+                        <img src="yunshiji-solution-11.jpg" alt="UI Research" class="merged-img">
+                        <img src="yunshiji-solution-end.jpg" alt="UI Research" class="merged-img">
+                    </div>
+                </div>                
+            </section>
+
+            <section id="results">
+                <h2>Results 结果与心得</h2>
+                <p>
+                    以下是一些值得总结的经验教训。
+                    <span class="highlight-bg">延续到未来的项目中</span>
+                </p>
+                <div style="background:#f8f9fc; padding:32px; border-radius:24px; margin-top:20px; ">
+                    <p class="mb-16"> <strong>主导此项目让我对以用户为中心的解决方案设计有了关键性的认识。以简化复杂流程为目的，强化这个项目的清晰性、效率及可扩展性的重要性。</strong> <br>它还教会了我根据用户反馈持续迭代的价值，同时考虑未来的发展，以确保系统能够适应不断变化的需求。</br></p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <div class="next-navigation">
+        <a href="wechoose.html" class="nav-card"><div class="nav-label">上一个项目</div><div class="nav-title">wechoose财务saas系统</div><div class="nav-arrow"><i class="ri-arrow-right-line"></i></div></a>
+        <a href="lovespouse.html" class="nav-card"><div class="nav-label">你可能感兴趣？</div><div class="nav-title">lovespouse优化案例</div><div class="nav-arrow"><i class="ri-arrow-right-line"></i></div></a>
+    </div>
+
+    <script>
+        // 进度条逻辑
+        window.onscroll = function() { updateProgress() };
+        function updateProgress() {
+            var winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            var height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            var scrolled = (winScroll / height) * 100;
+            document.getElementById("progressBar").style.width = scrolled + "%";
+            const sections = document.querySelectorAll('section, .info-grid');
+            const navLinks = document.querySelectorAll('.toc-link');
+            const sidebar = document.getElementById('tocSidebar');
+            
+            // Hero 图片高度，用来判断 sidebar 何时显示
+            const heroHeight = document.querySelector('.project-hero-wrapper').offsetHeight;
+
+            // 显示/隐藏 Sidebar
+            if (winScroll > heroHeight / 2) {
+                sidebar.classList.add('visible');
+            } else {
+                sidebar.classList.remove('visible');
+            }
+
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 150) { current = section.getAttribute('id'); }
+            });
+            if (current) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').replace('#', '') === current) link.classList.add('active');
+                });
+            }
+        }
+
+        // 拖拽逻辑 (通用 - 仅对非 frame-pan-mode 的 .drag-container)
+        const sliders = document.querySelectorAll('.drag-container:not(.frame-pan-mode)');
+        sliders.forEach(slider => {
+            let isDown = false, startX, startY, scrollLeft, scrollTop;
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true; slider.classList.add('active');
+                startX = e.pageX - slider.offsetLeft; startY = e.pageY - slider.offsetTop;
+                scrollLeft = slider.scrollLeft; scrollTop = slider.scrollTop;
+            });
+            slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('active'); });
+            slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('active'); });
+            slider.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft; const y = e.pageY - slider.offsetTop;
+                const walkX = (x - startX) * 2; const walkY = (y - startY) * 2; 
+                slider.scrollLeft = scrollLeft - walkX; 
+                slider.scrollTop = scrollTop - walkY;
+            });
+        });
+
+        // 画框内四向拖动 (frame-pan-mode)：放大展示，优先看到「一行的一部分」完整手机屏
+        const PAN_SCALE = 2.8; // 放大约 2.8 倍，手机屏与细节更清晰，参考示例图效果
+        document.querySelectorAll('.drag-container.frame-pan-mode').forEach(panel => {
+            const inner = panel.querySelector('.pan-inner');
+            if (!inner) return;
+            const w = panel.offsetWidth, h = panel.offsetHeight;
+            // 初始位置：略向下偏移，优先展示流程图第一行（一行的一部分）
+            const initTy = -h * 0.12;
+            let isDown = false, startX, startY, tx = 0, ty = initTy;
+            inner.style.transform = 'scale(' + PAN_SCALE + ') translate(0px, ' + initTy + 'px)';
+            inner.style.transformOrigin = '0 0';
+            panel.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.clientX; startY = e.clientY;
+            });
+            panel.addEventListener('mouseleave', () => { isDown = false; });
+            panel.addEventListener('mouseup', () => { isDown = false; });
+            panel.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const dx = e.clientX - startX, dy = e.clientY - startY;
+                startX = e.clientX; startY = e.clientY;
+                const w = panel.offsetWidth, h = panel.offsetHeight;
+                const maxTx = 0, minTx = -w * (PAN_SCALE - 1);
+                const maxTy = 0, minTy = -h * (PAN_SCALE - 1);
+                tx = Math.min(maxTx, Math.max(minTx, tx + dx));
+                ty = Math.min(maxTy, Math.max(minTy, ty + dy));
+                inner.style.transform = 'scale(' + PAN_SCALE + ') translate(' + tx + 'px, ' + ty + 'px)';
+            });
+        });
+
+        // 亮 / 暗设计方案原型切换
+        const themeToggleBtn = document.getElementById('prototypeThemeToggle');
+        if (themeToggleBtn) {
+            const lightImg = document.getElementById('prototypeImageLight');
+            const darkImg = document.getElementById('prototypeImageDark');
+            let mode = 'light';
+            themeToggleBtn.addEventListener('click', () => {
+                mode = mode === 'light' ? 'dark' : 'light';
+                const isDark = mode === 'dark';
+                themeToggleBtn.classList.toggle('dark', isDark);
+                themeToggleBtn.classList.toggle('light', !isDark);
+                if (lightImg && darkImg) {
+                    lightImg.classList.toggle('active', !isDark);
+                    darkImg.classList.toggle('active', isDark);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
